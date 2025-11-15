@@ -107,21 +107,17 @@ export default function MusicRecommend() {
             </>
           )}
         </div>
-
-        {/* Save button */}
-        <button
-          onClick={handleSaveTracks}
-          className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl"
-        >
-          Save Unselected Songs
-        </button>
       </div>
 
       {/* Right: Recommended Songs */}
       <div className="w-2/5 bg-white rounded-2xl shadow-md p-6 overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">
-          Recommended Songs for "{selectedMood}" 🎶
-        </h2>
+       {/* Save button */}
+        <button
+          onClick={handleSaveTracks}
+          className="mb-6 ml-70 bg-blue-500 hover:bg-blue-600 text-black px-12 py-2 rounded-xl"
+        >
+          Post
+        </button>
 
         <div className="space-y-4">
           {recommendedSongs.length > 0 ? (
