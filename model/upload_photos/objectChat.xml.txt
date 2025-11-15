@@ -1,0 +1,128 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="User & Mood System">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- UserManager -->
+        <mxCell id="2" value="UserManager&#xa;+ create_user()&#xa;+ create_superuser()" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="160" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- User -->
+        <mxCell id="3" value="User&#xa;- email: EmailField&#xa;- display_name: CharField&#xa;- profile_url: TextField&#xa;- created_at: DateTime&#xa;- is_active: Boolean&#xa;- is_staff: Boolean&#xa;+ __str__()" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="220" y="20" width="200" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- Track -->
+        <mxCell id="4" value="Track&#xa;- spotify_id: TextField&#xa;- name: TextField&#xa;- artists: TextField&#xa;- album: TextField&#xa;- duration_ms: Integer&#xa;- image_url: TextField&#xa;- created_at: DateTime&#xa;+ __str__()" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="220" y="180" width="200" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- TrackFavorite -->
+        <mxCell id="5" value="TrackFavorite&#xa;- created_at: DateTime&#xa;*user: FK → User&#xa;*track: FK → Track" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="460" y="40" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ListeningHistory -->
+        <mxCell id="6" value="ListeningHistory&#xa;- listen_count: Integer&#xa;*user: FK → User&#xa;*track: FK → Track" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="460" y="160" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Post -->
+        <mxCell id="7" value="Post&#xa;- image_path: TextField&#xa;- canvas_image: Image&#xa;- canvas_status: Char&#xa;- created_at: DateTime&#xa;- is_public: Boolean&#xa;*user: FK → User&#xa;*track: M2M → Track" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="20" y="200" width="200" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- MoodDetection -->
+        <mxCell id="8" value="MoodDetection&#xa;- mood: CharField&#xa;- confidence: Float&#xa;*user: FK → User&#xa;*post: FK → Post" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="460" y="300" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Comment -->
+        <mxCell id="9" value="Comment&#xa;- cmt_text: CharField&#xa;- created_at: DateTime&#xa;*user: FK → User&#xa;*post: FK → Post" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="20" y="380" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- PostLike -->
+        <mxCell id="10" value="PostLike&#xa;- created_at: DateTime&#xa;*user: FK → User&#xa;*post: FK → Post" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="240" y="380" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- MoodCNN -->
+        <mxCell id="11" value="MoodCNN&#xa;- features: Sequential&#xa;- classifier: Sequential&#xa;+ forward(x)" style="rounded=1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="700" y="40" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Relationships -->
+
+        <!-- UserManager -> User -->
+        <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- User -> TrackFavorite -->
+        <mxCell id="13" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="3" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- User -> ListeningHistory -->
+        <mxCell id="14" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="3" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- User -> Post -->
+        <mxCell id="15" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="3" target="7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- User -> MoodDetection -->
+        <mxCell id="16" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="3" target="8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- User -> Comment -->
+        <mxCell id="17" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="3" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- User -> PostLike -->
+        <mxCell id="18" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="3" target="10">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Track -> TrackFavorite -->
+        <mxCell id="19" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="4" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Track -> ListeningHistory -->
+        <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="4" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Post -> MoodDetection -->
+        <mxCell id="21" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Post -> Comment -->
+        <mxCell id="22" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="7" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Post -> PostLike -->
+        <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="7" target="10">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Post -> Track (M2M) -->
+        <mxCell id="24" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;strokeWidth=2;dashed=1;" edge="1" parent="1" source="7" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
