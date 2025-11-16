@@ -38,32 +38,39 @@ export default function MusicRecommend() {
     });
   };
 
-  // ---- Save unselected songs ----
+  // ---- Save SELECTED songs ----
   const handleSaveTracks = async () => {
-    const selectedIds = selectedSongs.map((s) => s.spotify_id);
-    const unselected = recommendedSongs.filter(
-      (s) => !selectedIds.includes(s.spotify_id)
-    );
+    if (selectedSongs.length === 0) {
+      alert("Please select at least one song!");
+      return;
+    }
 
     const payload = {
       user_id: userId,
       post_id: postId,
-      unselected_songs: unselected.map((s) => s.spotify_id),
+      image: imageUrl,
+      songs: selectedSongs.map((s) => ({
+        spotify_id: s.spotify_id,
+        title: s.title,
+        artist: s.artist,
+      })),
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/save-tracks/", {
+      const response = await fetch("http://127.0.0.1:8000/api/save_tracks/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const data = await response.json();
       console.log("Tracks saved:", data);
-      alert("Unselected songs saved successfully!");
+      alert("Selected songs saved successfully!");
     } catch (error) {
       console.error("Error saving tracks:", error);
     }
   };
+
 
   return (
     <div className="flex min-h-screen bg-gray-50 p-6 gap-6">
@@ -111,7 +118,7 @@ export default function MusicRecommend() {
 
       {/* Right: Recommended Songs */}
       <div className="w-2/5 bg-white rounded-2xl shadow-md p-6 overflow-y-auto">
-       {/* Save button */}
+       {/* Post button */}
         <button
           onClick={handleSaveTracks}
           className="mb-6 ml-70 bg-blue-500 hover:bg-blue-600 text-black px-12 py-2 rounded-xl"

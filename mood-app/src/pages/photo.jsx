@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 export default function Photo() {
   const [mood, setMood] = useState(null);
   const [file, setFile] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [songs, setSongs] = useState([]);
   const [manualMood, setManualMood] = useState(""); 
   const navigate = useNavigate();
 
-  // --- Auto-detect mood whenever file or manualMood changes ---
+// --- Auto-detect mood whenever file or manualMood changes ---
   useEffect(() => {
     const detectMood = async () => {
       // If manual mood is selected, use it directly
@@ -23,6 +24,7 @@ export default function Photo() {
       const formData = new FormData();
       formData.append("image", file);
 
+//To predict the photo's mood
       try {
         const res = await fetch("http://127.0.0.1:8000/api/predict/", {
           method: "POST",
@@ -31,7 +33,8 @@ export default function Photo() {
 
         const data = await res.json();
 
-        // Auto-detected mood, allow manual override
+// Auto-detected mood, allow manual override
+        setImageUrl(data.imageUrl);
         const detectedMood = manualMood || data.mood;
         setMood(detectedMood);
         setSongs(data.recommendations || []);
@@ -129,7 +132,7 @@ export default function Photo() {
             navigate("/create/music", { 
               state: { 
                 selectedMood: mood, 
-                imageUrl: URL.createObjectURL(file),
+                imageUrl: imageUrl,
                 songs: songs
               } 
             });

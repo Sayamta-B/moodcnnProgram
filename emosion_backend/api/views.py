@@ -8,7 +8,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from PIL import Image
 import torch
-from .models import User
+from .models import User, Post, Track
 from .serializers import UserSerializer
 from .mood_model import model, device, inference_transform, idx_to_class
 from .spotify_reco import recommend_song_for_mood
@@ -53,8 +53,66 @@ def predict(request):
     return Response({
         "mood": mood,
         "confidence": confidence,
-        "recommendations": recommendations
+        "recommendations": recommendations,
+        "image_url":image_url
     })
+
+
+@api_view(['POST'])
+def save_tracks(request):
+    print("Received data:", request.data)
+    user_id = request.data.get("user_id")
+    post_id = request.data.get("post_id")
+    songs = request.data.get("songs", [])
+
+    # Validate
+    if not user_id or not post_id or not songs:
+        return Response(
+            {"error": "Missing user_id, post_id, or songs"},
+            status=400
+        )
+
+    # Fetch user and post
+    try:
+        user = User.objects.get(id=user_id)
+        post = Post.objects.get(id=post_id, user=user)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Post.DoesNotExist:
+        return Response({"error": "Post not found"}, status=404)
+
+    saved_tracks = []
+
+    # Loop through songs
+    for s in songs:
+        spotify_id = s.get("spotify_id")
+        title = s.get("title")
+        artist = s.get("artist")
+
+        # Save or get Track
+        track_obj, created = Track.objects.get_or_create(
+            spotify_id=spotify_id,
+            defaults={
+                "name": title,
+                "artists": artist,
+                "album": "",
+                "duration_ms": 0,
+                "image_url": ""
+            }
+        )
+
+        # Attach to Post
+        post.track.add(track_obj)
+        saved_tracks.append(track_obj.spotify_id)
+
+    post.save()
+
+    return Response({
+        "message": "Selected songs saved successfully!",
+        "post_id": post_id,
+        "saved_tracks": saved_tracks
+    })
+
 
 
 # --- User Auth ---
