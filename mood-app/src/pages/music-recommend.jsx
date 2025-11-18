@@ -73,22 +73,71 @@ export default function MusicRecommend() {
 
 
   return (
-    <div className="flex min-h-screen bg-gray-50 p-6 gap-6">
-      {/* Left: Uploaded Photo + Music Player */}
-      <div className="w-3/5 flex flex-col items-center justify-center bg-white shadow-lg rounded-2xl p-6">
-        <h3 className="text-2xl font-semibold mb-4 text-gray-700">Uploaded Photo</h3>
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 gap-6">
+      {/* Post button */}
+            <button
+              onClick={handleSaveTracks}
+              className="mb-6 ml-70 bg-blue-500 hover:bg-blue-600 text-black px-12 py-2 rounded-xl"
+            >
+              Post
+            </button>
+        
 
-        {/* Image preview */}
-        <div className="w-64 h-64 mb-4 border-2 border-dashed rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
-          {imageUrl ? (
-            <img src={imageUrl} alt="Uploaded" className="object-cover w-full h-full" />
-          ) : (
-            <span className="text-gray-400">No photo available</span>
-          )}
-        </div>
 
-        {/* Music player */}
+          {/*Recommended Songs */}
+
+            <div className="space-y-0">
+              {recommendedSongs.length > 0 ? (
+                recommendedSongs.map((song, i) => {
+                  const isSelected = selectedSongs.some(
+                    (s) => s.spotify_id === song.spotify_id
+                  );
+                  const rank =
+                    isSelected &&
+                    selectedSongs.findIndex((s) => s.spotify_id === song.spotify_id) + 1;
+
+                  return (
+                    <div
+                      key={i}
+                      className={`p-2 rounded-xl flex justify-between items-center transition-all duration-300 ${
+                        isSelected
+                          ? "scale-105 border-blue-400 bg-blue-50 shadow-lg"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <img src={song.album_cover} alt="" className="w-12 h-12 rounded-lg" />
+                        <div>
+                          <p className="font-semibold text-gray-700">{song.title}</p>
+                          <p className="text-sm text-gray-500">{song.artist}</p>
+                          {isSelected && (
+                            <p className="text-xs text-blue-500 font-medium">
+                              Selected #{rank}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleToggleSong(song)}
+                        className={`px-4 py-1 rounded-lg font-medium transition ${
+                          isSelected
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                        }`}
+                      >
+                        {isSelected ? "Deselect" : "Select"}
+                      </button>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-gray-500">No recommendations available.</p>
+              )}
+            </div>
+
+            {/* Music player */}
         <div className="mt-6 w-full bg-gray-100 rounded-xl p-4 flex flex-col items-center">
+          
           <p className="font-semibold text-gray-700 mb-2">Music Player</p>
           {selectedSongs.length > 0 ? (
             <>
@@ -115,66 +164,5 @@ export default function MusicRecommend() {
           )}
         </div>
       </div>
-
-      {/* Right: Recommended Songs */}
-      <div className="w-2/5 bg-white rounded-2xl shadow-md p-6 overflow-y-auto">
-       {/* Post button */}
-        <button
-          onClick={handleSaveTracks}
-          className="mb-6 ml-70 bg-blue-500 hover:bg-blue-600 text-black px-12 py-2 rounded-xl"
-        >
-          Post
-        </button>
-
-        <div className="space-y-4">
-          {recommendedSongs.length > 0 ? (
-            recommendedSongs.map((song, i) => {
-              const isSelected = selectedSongs.some(
-                (s) => s.spotify_id === song.spotify_id
-              );
-              const rank =
-                isSelected &&
-                selectedSongs.findIndex((s) => s.spotify_id === song.spotify_id) + 1;
-
-              return (
-                <div
-                  key={i}
-                  className={`border p-4 rounded-xl flex justify-between items-center transition-all duration-300 ${
-                    isSelected
-                      ? "scale-105 border-blue-400 bg-blue-50 shadow-lg"
-                      : "hover:bg-gray-100"
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <img src={song.album_cover} alt="" className="w-12 h-12 rounded-lg" />
-                    <div>
-                      <p className="font-semibold text-gray-700">{song.title}</p>
-                      <p className="text-sm text-gray-500">{song.artist}</p>
-                      {isSelected && (
-                        <p className="text-xs text-blue-500 font-medium">
-                          Selected #{rank}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleToggleSong(song)}
-                    className={`px-4 py-1 rounded-lg font-medium transition ${
-                      isSelected
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                    }`}
-                  >
-                    {isSelected ? "Deselect" : "Select"}
-                  </button>
-                </div>
-              );
-            })
-          ) : (
-            <p className="text-gray-500">No recommendations available.</p>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }

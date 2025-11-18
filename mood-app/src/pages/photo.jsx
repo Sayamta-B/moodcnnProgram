@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+
 export default function Photo() {
   const [mood, setMood] = useState(null);
   const [file, setFile] = useState(null);
@@ -11,41 +12,48 @@ export default function Photo() {
 
 // --- Auto-detect mood whenever file or manualMood changes ---
   useEffect(() => {
-    const detectMood = async () => {
-      // If manual mood is selected, use it directly
-      if (manualMood && !file) {
-        setMood(manualMood);
-        setSongs([]); // Optionally fetch songs for manualMood
-        return;
+  const detectMood = async () => {
+      let detectedMood = manualMood;
+
+      if (file) {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          const res = await fetch("http://127.0.0.1:8000/api/predict/", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          setImageUrl(data.imageUrl);
+          detectedMood = detectedMood || data.mood;
+          setSongs(data.recommendations || []);
+        } catch (err) {
+          console.error("Error detecting mood:", err);
+        }
       }
 
-      if (!file) return;
-
-      const formData = new FormData();
-      formData.append("image", file);
-
-//To predict the photo's mood
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/predict/", {
-          method: "POST",
-          body: formData,
-        });
-
-        const data = await res.json();
-
-// Auto-detected mood, allow manual override
-        setImageUrl(data.imageUrl);
-        const detectedMood = manualMood || data.mood;
-        setMood(detectedMood);
-        setSongs(data.recommendations || []);
-      } catch (err) {
-        console.error("Error detecting mood:", err);
+      // If only manual mood is selected or detected mood exists
+      if (detectedMood && (!file || manualMood)) {
+        try {
+          const res = await fetch(
+            `http://127.0.0.1:8000/api/recommend_song_for_mood/?mood=${detectedMood}/`
+          );
+          const recoData = await res.json();
+          setSongs(recoData.recommendations || []);
+        } catch (err) {
+          console.error("Error fetching manual mood recommendations:", err);
+        }
       }
+
+      setMood(detectedMood);
     };
 
     detectMood();
-  }, [file, manualMood]); // runs automatically on file or manualMood change
+  }, [file, manualMood]);// runs automatically on file or manualMood change
 
+
+  
   return (
     <div className="flex min-h-screen bg-gray-50 p-6 gap-6">
       {/* Left: Upload + Preview */}
@@ -73,15 +81,12 @@ export default function Photo() {
           onChange={(e) => setFile(e.target.files[0])}
           className="block w-full border rounded-lg p-1 mb-4"
         />
-      </div>
 
-      {/* Right: Mood Info */}
-      <div className="w-2/5 rounded-2xl p-6 flex flex-col justify-between bg-white shadow-md">
         <div>
-          <h2 className="font-semibold mb-2 text-xl">Mood Info</h2>
+          <h2 className="font-semibold mt-12 mb-2 text-xl text-center">Mood Info</h2>
 
           {/* Manual mood selection */}
-          <div className="flex flex-col mb-6 space-y-2">
+          <div className="flex gap-6 mb-6 space-y-2">
             {["angry", "happy", "neutral", "sad", "surprise"].map((m) => (
               <label key={m} className="flex items-center space-x-2">
                 <input
@@ -106,8 +111,12 @@ export default function Photo() {
               </label>
                       ))}
           </div>
-
-          {mood ? (
+        </div>
+      </div>
+      {/* Right: Mood Info */}
+      <div className="w-2/5 rounded-2xl p-6 flex flex-col justify-between bg-white shadow-md">
+        <div>
+        {mood ? (
             <>
               <h2 className="text-2xl font-semibold text-blue-600 capitalize">
                 Mood: {mood}
@@ -120,12 +129,8 @@ export default function Photo() {
 
         <button
           onClick={() => {
-            if (!mood) {
-              alert("Please select a mood first!");
-              return;
-            }
-            if (!file) {
-              alert("Please upload an image first!");
+            if (!mood && !file) {
+              alert("Please select a mood or upload a picture!");
               return;
             }
 
