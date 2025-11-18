@@ -139,7 +139,7 @@ export default function Photo() {
           }}
           className="self-end px-4 py-2 bg-blue-500 hover:bg-blue-600 text-black rounded-xl transition"
         >
-          Next ..
+          Next →
         </button>
 
       </div>
