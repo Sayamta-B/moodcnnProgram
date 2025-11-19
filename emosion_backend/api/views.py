@@ -8,6 +8,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from PIL import Image
 import torch
+from django.http import JsonResponse
 from .models import User, Post, Track
 from .serializers import UserSerializer
 from .mood_model import model, device, inference_transform, idx_to_class
@@ -56,6 +57,21 @@ def predict(request):
         "recommendations": recommendations,
         "image_url":image_url
     })
+
+
+def get_Recommendation(request):
+    mood = request.GET.get("mood")  # ?mood=happy
+
+    if not mood:
+        return JsonResponse(
+            {"error": "Mood is required, example: /recommend_song_for_mood/?mood=happy"},
+            status=400
+        )
+    print(mood)
+
+    recommendations = recommend_song_for_mood(mood)
+    return JsonResponse({"recommendations": recommendations})
+
 
 
 @api_view(['POST'])

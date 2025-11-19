@@ -1,12 +1,11 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import logging
-from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
 
 # Map moods to search queries
-mood_queries = {
+MOOD_QUERIES = {
     "happy": "happy",
     "sad": "sad",
     "neutral": "chill",
@@ -14,33 +13,42 @@ mood_queries = {
     "surprise": "pop",
 }
 
-# Initialize Spotify client
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
+# Initialize Spotify client with a timeout
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(), requests_timeout=20)
 
 def recommend_song_for_mood(mood: str):
-    query = mood_queries.get(mood.lower(), "pop")
+    """
+    Return a list of recommended tracks based on the given mood.
+    Each track includes id, name, artists, album cover, Spotify URL, and preview URL.
+    """
+    query = MOOD_QUERIES.get(mood.lower(), "pop")
+    
     try:
         results = sp.search(q=query, type="track", limit=30)
         tracks = results.get("tracks", {}).get("items", [])
     except Exception as e:
-        logger.exception("Spotify search failed")
+        logger.exception("Spotify search failed for mood '%s'", mood)
         return []
 
-    filtered_tracks = tracks[:6] if tracks else []
+    # Take top 6 tracks
+    filtered_tracks = tracks[:6]
 
     final_recs = []
-    for t in filtered_tracks:
-        tid = t.get("id")
-        name = t.get("name")
-        artists = ", ".join([a.get("name") for a in t.get("artists", []) if a.get("name")])
-        album_cover = t.get("album", {}).get("images", [{}])[0].get("url")
-        
+    for track in filtered_tracks:
+        spotify_id = track.get("id")
+        name = track.get("name")
+        artists = ", ".join([a.get("name") for a in track.get("artists", []) if a.get("name")])
+        album_cover = track.get("album", {}).get("images", [{}])[0].get("url")
+        spotify_url = track.get("external_urls", {}).get("spotify")
+        preview_url = track.get("preview_url")
+
         final_recs.append({
-            "spotify_id": tid,
-            "title": name,
+            "spotify_id": spotify_id,
+            "name": name,
             "artist": artists,
-            "url": t.get("external_urls", {}).get("spotify"),
-            "preview_url": t.get("preview_url"),
+            "url": spotify_url,
+            "preview_url": preview_url,
             "album_cover": album_cover
         })
+
     return final_recs
