@@ -1,7 +1,6 @@
-import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
-export default function SidebarLeft({ onLogout }) {
+export default function SidebarLeft(props) {
   const location = useLocation();
   const isCreateRoute = location.pathname.startsWith("/create");
 
@@ -80,7 +79,7 @@ export default function SidebarLeft({ onLogout }) {
         </div>
 
         <button
-          onClick={onLogout}
+          onClick={props.handleLogout}
           className="w-full text-left px-4 py-2 text-red-500 hover:text-red-700 rounded transition"
         >
           Logout

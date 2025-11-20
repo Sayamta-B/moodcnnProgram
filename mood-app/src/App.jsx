@@ -1,4 +1,4 @@
-import React from "react";
+import { BrowserRouter } from "react-router-dom";
 import { Routes, Route, Navigate } from "react-router-dom";
 import SidebarLeft from "./components/sidebar-left";
 import Home from "./pages/home";
@@ -8,6 +8,7 @@ import Journal from "./pages/journal";
 import MusicRecommend from "./pages/music-recommend";
 import Register from "./pages/register";
 import Login from "./pages/login";
+import UserPhotoInfoState from "./context/UserPhotoInfoState";
 
 function App() {
   const user = localStorage.getItem("user");
@@ -20,6 +21,9 @@ function App() {
 
   return (
     <>
+    <UserPhotoInfoState>
+
+      <BrowserRouter>
       {!user ? (
         <Routes>
           {/* Logged-out routes */}
@@ -30,7 +34,7 @@ function App() {
       ) : (
         <div className="flex h-screen w-screen overflow-hidden">
           {/* Sidebar with logout */}
-          <SidebarLeft onLogout={handleLogout} />
+          <SidebarLeft handleLogout={handleLogout} />
 
           {/* Main content */}
           <main className="flex-1 overflow-y-auto">
@@ -46,6 +50,8 @@ function App() {
           </main>
         </div>
       )}
+      </BrowserRouter>
+      </UserPhotoInfoState>
     </>
   );
 }

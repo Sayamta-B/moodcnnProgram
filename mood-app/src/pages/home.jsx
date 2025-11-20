@@ -1,4 +1,3 @@
-import React from "react";
 import SidebarRight from "../components/sidebar-right";
 import PostCard from "../components/postcard";
 
@@ -12,6 +11,7 @@ function Home() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   return (
+    <>
       <div className="flex h-screen">
         <main className="flex-1 overflow-y-auto p-5 space-y-5">
           {posts.map((post) => (
@@ -20,6 +20,8 @@ function Home() {
         </main>
         <SidebarRight />
       </div>
+      {console.log(user)}
+          </>
   );
 }
 

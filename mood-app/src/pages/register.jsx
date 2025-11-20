@@ -12,10 +12,10 @@ function Register() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    const data = await res.json();
+    const data = await res.json(); // user's info in object format {username: "sam", age: 12}
     if (res.ok) {
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(data.user)); // user's data is being stored in JSON format "{"username":"sam", "age":12}"
       window.location.href = "/";
     } else alert("Registration failed!");
   };

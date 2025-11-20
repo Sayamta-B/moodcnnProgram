@@ -1,0 +1,122 @@
+Testing
+- Mood detection
+	- let user select mood manually
+	- mood by radio button only
+	- block next if no input
+	
+
+- database
+	- admin made?
+	- user register?
+	- admin and user login?
+
+-song
+	-song recommend even with manual mood selection
+	- let user select songs from recommendations
+	- when mood change, song select clear
+
+
+
+Things to do
+songs
+mood statistics
+database
+
+classes files:
+model.py
+views.py
+moodcnn_pytorch.ipynb
+serializers.py
+
+
+
+
+For Mood statistics
+User-Level Analytics
+
+Mood Trends Over Time
+Line chart showing how the user’s moods change over days/weeks/months.
+
+Most Frequent Mood
+Pie chart showing distribution of moods the user records.
+
+Songs Played per Mood
+Bar chart showing how many times each song was played for a particular mood.
+
+Mood Detection Accuracy (if comparing manual vs auto detection)
+Scatter plot or bar chart showing correct vs incorrect mood detection.
+
+Average Songs Selected per Mood
+Bar chart showing how many songs the user typically selects per mood.
+
+
+2. Global / Aggregate Analytics
+
+Overall Mood Distribution
+
+Pie or donut chart showing what percentage of moods are happy, sad, angry, etc.
+
+Popular Songs by Mood
+
+Top 10 songs per mood in a bar chart or leaderboard style.
+
+Mood Trends Over Time Across Users
+
+Line chart showing changes in mood frequency across all users by day/week/month.
+
+Active Users by Mood Activity
+
+Bar chart or heatmap showing which users log moods most frequently.
+
+Songs Trending for a Mood
+
+List or bar chart showing which songs are trending for a particular mood recently.
+
+
+
+the saving thing
+# Save MoodDetection (link to request.user if available)
+    try:
+        user = request.user if getattr(request, "user", None) and request.user.is_authenticated else None
+        md = MoodDetection.objects.create(
+            user=user,
+            mood=mood,
+            confidence=confidence,
+            image_path=saved_name or (image_url or ""),
+        )
+    except Exception:
+        logger.exception("Failed saving MoodDetection")
+
+
+
+
+
+In your `MoodCNN`, they used **4 convolutional layers** and **2 fully connected (FC) layers** for a few key reasons:
+
+1. **Progressive Feature Extraction (4 Conv Layers):**
+
+   * Each convolutional layer extracts increasingly complex features.
+   * The first layer (16 filters) captures very simple patterns like edges or corners.
+   * Middle layers (32, 64 filters) capture shapes or textures.
+   * The last layer (128 filters) captures high-level, abstract features that are more meaningful for classification (like facial expressions).
+   * More layers → richer hierarchical feature representation.
+
+2. **Flattening → Fully Connected Layers (2 FC Layers):**
+
+   * After convolutions, the feature maps are flattened into a vector.
+   * The first FC layer (128 neurons) acts as a **hidden layer**, learning combinations of the features extracted by the conv layers.
+   * The second FC layer maps these learned combinations to the **final output classes** (num_classes).
+   * Using two FC layers instead of one gives the network slightly more modeling capacity to learn complex mappings without being too heavy.
+
+3. **Regularization and Nonlinearity:**
+
+   * ReLU between layers allows modeling non-linear relationships.
+   * Dropout and pooling in conv layers reduce overfitting, allowing more layers without drastically hurting generalization.
+
+✅ **In short:** 4 conv layers help capture hierarchical patterns in images, and 2 FC layers let the network combine those features effectively to predict the final classes.
+
+If you want, I can also make a **diagram showing how features flow through conv → FC layers** so it’s super easy to visualize. Do you want me to do that?
+
+
+
+

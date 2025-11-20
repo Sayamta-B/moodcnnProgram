@@ -101,7 +101,7 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = 'api.User'  # your custom user model
+AUTH_USER_MODEL = 'api.User'  # custom user model
 
 AUTHENTICATION_BACKENDS = [
     'api.backends.EmailBackend',  # 🔑 custom backend
