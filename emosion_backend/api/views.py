@@ -73,62 +73,102 @@ def get_Recommendation(request):
     return JsonResponse({"recommendations": recommendations})
 
 
-
 @api_view(['POST'])
-def save_tracks(request):
-    print("Received data:", request.data)
-    user_id = request.data.get("user_id")
-    post_id = request.data.get("post_id")
-    songs = request.data.get("songs", [])
+def create_post(request):
+    """
+    Create a new Post with optional image and tracks.
+    Expects JSON:
+    {
+        "user_id": int,
+        "image": str (optional),
+        "songs": [{
+            spotify_id, name, artist, album, image_url, duration_ms, genre
+        }]
+    }
+    Returns: { "post_id": int, "saved_tracks": [spotify_id] }
+    """
+    data = request.data
+    user_id = data.get("user_id")
+    image_url = data.get("image")
+    songs = data.get("songs", [])
 
-    # Validate
-    if not user_id or not post_id or not songs:
-        return Response(
-            {"error": "Missing user_id, post_id, or songs"},
-            status=400
-        )
-
-    # Fetch user and post
+    # Validate user
     try:
         user = User.objects.get(id=user_id)
-        post = Post.objects.get(id=post_id, user=user)
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
-    except Post.DoesNotExist:
-        return Response({"error": "Post not found"}, status=404)
+
+
+    # Create post
+    post = Post.objects.create(user=user, image_path=image_url or "")
 
     saved_tracks = []
 
-    # Loop through songs
     for s in songs:
         spotify_id = s.get("spotify_id")
-        title = s.get("title")
-        artist = s.get("artist")
+        if not spotify_id:
+            continue
 
-        # Save or get Track
         track_obj, created = Track.objects.get_or_create(
             spotify_id=spotify_id,
             defaults={
-                "name": title,
-                "artists": artist,
-                "album": "",
-                "duration_ms": 0,
-                "image_url": ""
+                "name": s.get("name", ""),
+                "artists": s.get("artist", ""),
+                "album": s.get("album",""),
+                "duration_ms": s.get("duration_ms", 0),
+                "image_url": s.get("image_url", ""),
+                "genre": s.get("genre", "")
             }
         )
 
-        # Attach to Post
+        # If track already existed, update fields
+        if not created:
+            track_obj.name = s.get("name", track_obj.name)
+            track_obj.artists = s.get("artist", track_obj.artists)
+            track_obj.album = s.get("album", {}).get("name", "")
+            track_obj.duration_ms = s.get("duration_ms", track_obj.duration_ms)
+            track_obj.image_url = s.get("image_url", track_obj.image_url)
+            track_obj.genre = s.get("genre", track_obj.genre)
+            track_obj.save()
+
         post.track.add(track_obj)
         saved_tracks.append(track_obj.spotify_id)
 
     post.save()
 
     return Response({
-        "message": "Selected songs saved successfully!",
-        "post_id": post_id,
+        "post_id": post.id,
         "saved_tracks": saved_tracks
-    })
+    }, status=201)
 
+
+
+#----- Save Canvas---
+@api_view(['POST'])
+def save_canvas(request):
+    print("Not happening")
+    post_id = request.data.get("post_id")
+    canvas_image = request.data.get("canvas_image")  # base64 string
+
+    if not post_id or not canvas_image:
+        return Response({"error": "Missing post_id or canvas_image"}, status=400)
+
+    try:
+        post = Post.objects.get(id=post_id)
+    except Post.DoesNotExist:
+        return Response({"error": "Post not found"}, status=404)
+
+    # decode base64 → image
+    import base64
+    from django.core.files.base import ContentFile
+
+    format, imgstr = canvas_image.split(";base64,")
+    ext = format.split("/")[-1]
+    file_name = f"canvas_{post_id}.{ext}"
+
+    post.canvas_image.save(file_name, ContentFile(base64.b64decode(imgstr)), save=True)
+
+    return Response({"message": "Canvas saved successfully"})
 
 
 # --- User Auth ---
@@ -154,6 +194,8 @@ class LoginView(generics.GenericAPIView):
         email = request.data.get("email")
         password = request.data.get("password")
         user = authenticate(request, email=email, password=password)
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
         if user:
             refresh = RefreshToken.for_user(user)
             return Response({

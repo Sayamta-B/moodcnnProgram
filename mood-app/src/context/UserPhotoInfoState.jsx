@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; 
 import UserPhotoInfoContext from "./UserPhotoInfoContext";
 
 export default function UserPhotoInfoState({ children }) {
@@ -12,6 +12,14 @@ export default function UserPhotoInfoState({ children }) {
     const [recommendedSongs, setRecommendedSongs] = useState([]);
     const [file, setFile] = useState(null);
     const [manualMood, setManualMood] = useState("");
+
+    // Load IDs from localStorage on mount
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const storedPostId = localStorage.getItem("postId"); // you need to save postId when creating a post
+    if (storedUser) setUserId(storedUser.id);
+    if (storedPostId) setPostId(storedPostId);
+  }, []);
 
     return (
         <UserPhotoInfoContext.Provider

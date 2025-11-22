@@ -112,12 +112,46 @@ export default function Photo() {
 
 
   // ➡️ Next button
-  const handleNext = () => {
-    if (!mood && !file) return alert("Please select a mood or upload a picture!");
-    if (!selectedSongs.length) return alert("Please select at least one song!");
+const handleNext = async () => {
+  if (!mood && !file) return alert("Please select a mood or upload a picture!");
+  if (!selectedSongs.length) return alert("Please select at least one song!");
 
-    navigate("/create/journal");
-  };
+  try {
+    const payload = {
+      user_id: userId,
+      image: imageUrl, // optional
+      songs: selectedSongs.map(s => ({
+        spotify_id: s.spotify_id,
+        name: s.title,
+        artist: s.artist,
+        album: s.album.name,
+        image_url: s.album_cover,
+        duration_ms: s.duration_ms,
+        genre: s.genre
+      }))
+    };
+
+    const res = await fetch("http://127.0.0.1:8000/api/create_post/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!data.post_id) return alert("Failed to create post!");
+
+    setPostId(data.post_id);
+    navigate("/create/journal", {
+      state: { userId, postId: data.post_id, selectedSongs, imageUrl }
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to create post");
+  }
+};
+
+
 
 
   // ---------------- UI BELOW ----------------

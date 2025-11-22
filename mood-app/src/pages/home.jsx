@@ -1,5 +1,5 @@
-import SidebarRight from "../components/sidebar-right";
-import PostCard from "../components/postcard";
+import SidebarRight from "../components/SidebarRight";
+import PostCard from "../components/Postcard";
 
 const posts = [
   { id: 1, username: "Alex", userPhoto: "https://i.pravatar.cc/100?img=1", image: "https://picsum.photos/400/300?random=1" },

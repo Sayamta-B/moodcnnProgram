@@ -1,9 +1,9 @@
 // src/pages/profile.jsx
 import React, { useState } from "react";
-import PostCard from "../components/postcard";
-import ProfileInfo from "../components/profile-info";
-import ProfileNav from "../components/profile-nav";
-import PostPage from "./post-page";
+import PostCard from "../components/Postcard";
+import ProfileInfo from "../components/ProfileInfo";
+import ProfileNav from "../components/ProfileNav";
+import PostPage from "./PostPage";
 
 const posts = [
   { id: 1, username: "Alex", image: "https://picsum.photos/400/300?random=1" },

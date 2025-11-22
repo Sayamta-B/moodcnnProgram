@@ -120,3 +120,29 @@ If you want, I can also make a **diagram showing how features flow through conv 
 
 
 
+
+
+Post table:
+
+user_id → User relation
+
+image_path → from imageUrl
+
+canvas_image / canvas_data → optional if you have drawing feature later
+
+Tracks for post (many-to-many Post.track):
+
+Use selectedSongs.map(s => spotify_id)
+
+Only attach existing Track objects
+
+Mood detection (optional):
+
+MoodDetection.user → userId
+
+MoodDetection.post → postId
+
+MoodDetection.mood → mood or manualMood
+
+MoodDetection.confidence → if your API provides a confidence score
+

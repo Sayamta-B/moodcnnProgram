@@ -5,7 +5,7 @@ class User(AbstractUser):
     profile_url = models.TextField(null=True, blank=True)
 
     USERNAME_FIELD='email'
-    REQUIRED_FIELDS=[]
+    REQUIRED_FIELDS=['username']
 
     email = models.EmailField(unique=True)
 # default fields like username, email, password, first_name, last_name, date_join, last_login
