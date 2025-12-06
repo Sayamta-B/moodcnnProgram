@@ -6,7 +6,9 @@ Testing
 	
 
 - database
-	- admin made?
+	- admin made(superuser login give admin panel)?
+	- user register valid email?
+	- user register invalid email?
 	- user register?
 	- admin and user login?
 
@@ -15,12 +17,19 @@ Testing
 	- let user select songs from recommendations
 	- when mood change, song select clear
 
+-login spotify
+	- login button work?
+	- authorize valids?
+	- unuhorize unvalids?
+	- callback page gone work?
+
 
 
 Things to do
 songs
 mood statistics
 database
+dashboard: what songs what post check, 
 
 classes files:
 model.py
@@ -72,6 +81,99 @@ Songs Trending for a Mood
 
 List or bar chart showing which songs are trending for a particular mood recently.
 
+______________________________________________________
+
+1. Fetch songs for a post’s mood detection
+
+Goal: After a user uploads an image (or a drawing), the CNN detects a mood → you want songs that match that mood.
+
+Spotify APIs to use:
+
+Search API: GET /v1/search?q={mood}&type=track
+
+Query Spotify for songs that match the mood keyword (e.g., "happy", "sad", "energetic").
+
+Use access token from Spotify OAuth for authorized requests.
+
+Tracks API: GET /v1/tracks/{id}
+
+Once you have track IDs, get detailed info: name, album, artists, duration, genre, cover image.
+
+Where in your project:
+
+Backend endpoint /api/get_tracks_for_mood/
+
+Input: mood label (from CNN)
+
+Output: list of tracks → store them in Track model linked to the Post.
+
+Notes:
+
+You can fetch multiple tracks and allow the user to select which ones are linked to the post.
+
+Tracks are stored in your DB so that multiple posts can share the same track.
+__________________________________
+
+2. Homepage music player (playback & top listens)
+
+Goal: A user logs in → see a music player that plays either:
+
+The top songs you’ve served to them
+
+Their “top listens” from your app
+
+Spotify APIs to use:
+
+Web Playback SDK (optional if you want playback in browser):
+
+Play Spotify songs directly in your frontend music player.
+
+Requires the user to be authenticated with Spotify.
+
+Player API (PUT /v1/me/player/play)
+
+Control playback: play, pause, skip tracks.
+
+Top Tracks API (GET /v1/me/top/tracks)
+
+If you want personalized Spotify top tracks for the user (requires Spotify account login).
+
+Where in your project:
+
+Frontend: React Home page music player component.
+
+Backend: optional endpoint to proxy requests to Spotify API with session token.
+
+Notes:
+
+Users must connect their Spotify account to use real playback features.
+
+If they don’t connect, you can still play tracks from your database (Track model) using embedded audio URLs or previews.
+___________________________________
+
+3. Favorite music page
+
+Goal: Let users see songs they’ve favorited in your app.
+
+Spotify APIs to use:
+
+Only if you want to check actual Spotify info (like album art or preview URL)
+
+Otherwise, use local database tracks:
+
+TrackFavorite model: user → tracks relationship
+
+Render track details (name, album, image_url, artists)
+
+Where in your project:
+
+Frontend: React FavoriteMusic page
+
+Backend: /api/favorites/ → return user’s favorited tracks
+
+Notes:
+
+No need to call Spotify API for every favorite track if you already stored track info in DB.
 
 
 the saving thing

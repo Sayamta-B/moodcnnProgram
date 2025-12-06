@@ -13,6 +13,7 @@ from .models import User, Post, Track
 from .serializers import UserSerializer
 from .mood_model import model, device, inference_transform, idx_to_class
 from .spotify_reco import recommend_song_for_mood
+from django.contrib.auth import login as dj_login, authenticate
 
 import logging
 
@@ -171,7 +172,7 @@ def save_canvas(request):
     return Response({"message": "Canvas saved successfully"})
 
 
-# --- User Auth ---
+
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
 
@@ -179,27 +180,31 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            refresh = RefreshToken.for_user(user)
+
             return Response({
+                "message": "Registered successfully",
                 "user": UserSerializer(user).data,
-                "token": str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(generics.GenericAPIView):
-    serializer_class = UserSerializer
 
-    def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("password")
-        user = authenticate(request, email=email, password=password)
-        user.last_login = timezone.now()
-        user.save(update_fields=['last_login'])
-        if user:
-            refresh = RefreshToken.for_user(user)
+@api_view(["POST"])
+def login_view(request):
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    user = authenticate(request, email=email, password=password)
+    if user:
+        dj_login(request, user)  # creates session + sessionid cookie
+        # check if superuser
+        if user.is_superuser:
+            return Response({"redirect": "127.0.0.1:8000/admin"}, status=200)
+        else:
             return Response({
-                "user": UserSerializer(user).data,
-                "token": str(refresh.access_token),
-            })
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+                "message": "Login successful",
+                "user": UserSerializer(user).data
+            }, status=200)
+    
+    return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)

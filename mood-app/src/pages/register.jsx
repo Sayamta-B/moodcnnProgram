@@ -2,64 +2,63 @@ import React, { useContext } from "react";
 import RegisterContext from "../context/RegisterContext";
 
 function Register() {
-  const { form, setForm, loading, setLoading } = useContext(RegisterContext);
+  const { form, setForm } = useContext(RegisterContext);
 
-  // Update form state on input change...everytime user edits/writes the field
+  // ---------------- Handle Input Change ----------------
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
   };
 
-  // Submit registration
+  // ---------------- Submit Form ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
+    if (form.password !== form.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
     try {
       const res = await fetch("http://127.0.0.1:8000/api/register/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Django session cookie
         body: JSON.stringify(form),
       });
 
       const data = await res.json();
-      console.log("Backend response:", data); // debug
+      console.log("Backend response:", data);
 
       if (res.ok) {
-        if (data.token && data.user) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data.user));
-          window.location.href = "/";
-        } else {
-          alert("Registration succeeded but token/user missing!");
-        }
+        alert("Registered successfully!");
+        window.location.href = "/login";
       } else {
-        // show serializer errors
-        const errMsg = data.detail || JSON.stringify(data);
-        alert(errMsg);
+        alert(data.detail || JSON.stringify(data));
       }
     } catch (err) {
       console.error(err);
       alert("Something went wrong!");
-    } finally {
-      setLoading(false);
     }
   };
 
-
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow-md w-80 flex flex-col gap-3"
+        className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm space-y-4"
       >
-        <h2 className="text-2xl font-bold mb-4 text-center">Register</h2>
+        <h2 className="text-3xl font-bold text-center text-gray-800">
+          Register
+        </h2>
 
         <input
           name="username"
           value={form.username}
           placeholder="Username"
-          className="border p-2 w-full rounded"
           onChange={handleChange}
           required
+          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-400"
         />
 
         <input
@@ -67,9 +66,27 @@ function Register() {
           type="email"
           value={form.email}
           placeholder="Email"
-          className="border p-2 w-full rounded"
           onChange={handleChange}
           required
+          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-400"
+        />
+
+        <input
+          name="first_name"
+          value={form.first_name}
+          placeholder="First Name"
+          onChange={handleChange}
+          required
+          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-400"
+        />
+
+        <input
+          name="last_name"
+          value={form.last_name}
+          placeholder="Last Name"
+          onChange={handleChange}
+          required
+          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-400"
         />
 
         <input
@@ -77,9 +94,9 @@ function Register() {
           type="password"
           value={form.password}
           placeholder="Password"
-          className="border p-2 w-full rounded"
           onChange={handleChange}
           required
+          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-400"
         />
 
         <input
@@ -87,19 +104,16 @@ function Register() {
           type="password"
           value={form.confirmPassword}
           placeholder="Confirm Password"
-          className="border p-2 w-full rounded"
           onChange={handleChange}
           required
+          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-400"
         />
 
         <button
           type="submit"
-          className={`bg-blue-500 text-white px-4 py-2 rounded ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          disabled={loading}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-all"
         >
-          {loading ? "Registering..." : "Register"}
+          Register
         </button>
       </form>
     </div>

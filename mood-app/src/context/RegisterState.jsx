@@ -5,18 +5,17 @@ export default function RegisterState({ children }) {
   const [form, setForm] = useState({
     username: "",
     email: "",
+    first_name: "",
+    last_name: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
-  const [loading, setLoading] = useState(false);
 
   return (
     <RegisterContext.Provider
       value={{
         form,
         setForm,
-        loading,
-        setLoading
       }}
     >
       {children}

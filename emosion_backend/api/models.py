@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
-    profile_url = models.TextField(null=True, blank=True)
+    profile_url = models.TextField(default='C:/moodcnnProgram/model/upload_photos/defaultProfile.jpg')
 
     USERNAME_FIELD='email'
     REQUIRED_FIELDS=['username']
@@ -10,11 +10,20 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
 # default fields like username, email, password, first_name, last_name, date_join, last_login
 
+class Post(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    image_path = models.TextField()
+    canvas_image = models.ImageField(upload_to='canvas_drawings/', null=True, blank=True)
+    canvas_data = models.JSONField(null=True, blank=True)
+    bookmark = models.BooleanField(default=False)
+    tracks = models.ManyToManyField('Track', related_name='posts', blank=True)  # multiple tracks
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 class Track(models.Model):
-    spotify_id = models.CharField(max_length=50)
+    spotify_id = models.CharField(unique=True, max_length=50)
     name = models.TextField()
-    artists = models.JSONField(null=True, blank=True) # structured array of artists
+    artists = models.JSONField(null=True, blank=True)  # structured array of artists
     album = models.TextField()
     duration_ms = models.IntegerField()
     genre = models.CharField(max_length=50, null=True, blank=True)
@@ -33,20 +42,8 @@ class TrackFavorite(models.Model):
         ]
 
 
-
-class Post(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    image_path = models.TextField()
-    canvas_image = models.ImageField(upload_to='canvas_drawings/', null=True, blank=True)
-    canvas_data = models.JSONField(null=True, blank=True)
-    bookmark= models.BooleanField(default=False)
-    track = models.ManyToManyField(Track, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-
 class MoodDetection(models.Model):
     MOOD_CHOICES = [
-        ('angry', 'Angry'),
         ('happy', 'Happy'),
         ('neutral', 'Neutral'),
         ('sad', 'Sad'),
