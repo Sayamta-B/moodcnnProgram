@@ -1,5 +1,6 @@
 import SidebarRight from "../components/SidebarRight";
 import PostCard from "../components/Postcard";
+import { useLogin } from "../context/LoginState";
 
 const posts = [
   { id: 1, username: "Alex", userPhoto: "https://i.pravatar.cc/100?img=1", image: "https://picsum.photos/400/300?random=1" },
@@ -8,7 +9,7 @@ const posts = [
 ];
 
 function Home() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const { user } = useLogin();
 
   return (
     <>

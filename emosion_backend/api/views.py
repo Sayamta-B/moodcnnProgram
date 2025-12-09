@@ -8,12 +8,18 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from PIL import Image
 import torch
+
+import json
+from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
+
 from .models import User, Post, Track
 from .serializers import UserSerializer
 from .mood_model import model, device, inference_transform, idx_to_class
 from .spotify_reco import recommend_song_for_mood
-from django.contrib.auth import login as dj_login, authenticate
+
 
 import logging
 
@@ -192,19 +198,82 @@ class RegisterView(generics.CreateAPIView):
 
 @api_view(["POST"])
 def login_view(request):
-    email = request.data.get("email")
-    password = request.data.get("password")
+    print("Login request received")
 
+    # --- Parse JSON safely ---
+    try:
+        data = json.loads(request.body)
+    except:
+        return Response({"error": "Invalid JSON"}, status=400)
+
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return Response({"error": "Email and password required"}, status=400)
+
+    # --- Authenticate user ---
     user = authenticate(request, email=email, password=password)
-    if user:
-        dj_login(request, user)  # creates session + sessionid cookie
-        # check if superuser
-        if user.is_superuser:
-            return Response({"redirect": "127.0.0.1:8000/admin"}, status=200)
-        else:
-            return Response({
-                "message": "Login successful",
-                "user": UserSerializer(user).data
-            }, status=200)
-    
-    return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not user:
+        return Response({"error": "Invalid credentials"}, status=401)
+
+    # --- Django login (creates session + sessionid cookie) ---
+    login(request, user)
+
+    # --- Optional custom session data ---
+    request.session["user_id"] = user.id
+    request.session["email"] = user.email
+    request.session["logged_in"] = True
+
+    # --- Admin redirect case ---
+    if user.is_superuser:
+        print("SUPERMAN LOGIN")
+        return Response({
+            "user": UserSerializer(user).data,
+            "redirect": "/admin/"
+        }, status=200)
+
+    print("NORMAL USER LOGIN")
+    return Response({
+        "message": "Login successful",
+        "user": UserSerializer(user).data,
+    }, status=200)
+
+
+@api_view(["POST"])
+def logout_view(request):
+    if request.user.is_authenticated:
+        logout(request)
+        return Response({"detail": "Successfully logged out"}, status=200)
+    else:
+        return Response({"detail": "Already logged out"}, status=200)
+
+
+
+@api_view(["GET"])
+@ensure_csrf_cookie
+def session_view(request):
+    """
+    Sends back: {"is_authenticated": true/false}
+    Also ensures csrftoken cookie is sent.
+    """
+    return Response({"is_authenticated": request.user.is_authenticated})
+
+
+@api_view(["GET"])
+def who_am_i(request):
+    """
+    Sends back:
+    {
+       "is_authenticated": true/false,
+       "username": "...",
+    }
+    """
+    if not request.user.is_authenticated:
+        return Response({"is_authenticated": False})
+
+    return Response({
+        "is_authenticated": True,
+        "username": request.user.email
+    })

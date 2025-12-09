@@ -1,33 +1,58 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import LoginContext from "../context/LoginContext";
+import { useLogin } from "../context/LoginState";
 
 function Login() {
+  const { setUser } = useLogin();
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
-  // Submit login using Django session
+  // Get CSRF token from cookie
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = cookie.substring(name.length + 1);
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const res = await fetch("http://127.0.0.1:8000/api/login/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // important: allow session cookie
+        credentials: "include", // allow session cookies
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
         body: JSON.stringify(form),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        // No token needed; Django sets sessionid cookie automatically
+        setUser(data.user);
+
         alert("Logged in successfully!");
-        window.location.href = "/"; // redirect to dashboard/home
+
+        if (data.redirect) {
+          window.location.href = data.redirect;
+        } else {
+          window.location.href = "/";
+        }
       } else {
-        const errMsg = data.error || "Invalid email or password!";
-        alert(errMsg);
+        alert(data.error || "Invalid email or password!");
       }
     } catch (err) {
       console.error(err);
@@ -37,7 +62,10 @@ function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md w-80 flex flex-col gap-3">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded-lg shadow-md w-80 flex flex-col gap-3"
+      >
         <h2 className="text-xl font-bold mb-4 text-center">Login</h2>
 
         <input
