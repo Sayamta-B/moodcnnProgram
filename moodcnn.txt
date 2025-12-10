@@ -11,6 +11,8 @@ Testing
 	- user register invalid email?
 	- user register?
 	- admin and user login?
+	- session made and saved in local storage
+	- logout then local storage data gone?
 
 -song
 	-song recommend even with manual mood selection
