@@ -2,38 +2,61 @@ import { useContext, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import UserPhotoInfoContext from "../context/UserPhotoInfoContext";
 
-
 export default function Photo() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const {
-  mood, setMood,
-  file, setFile,
-  imageUrl, setImageUrl,
-  songs, setSongs,
-  selectedSongs, setSelectedSongs,
-  recommendedSongs, setRecommendedSongs,
-  manualMood, setManualMood,
-  userId, setUserId,
-  postId, setPostId
-} = useContext(UserPhotoInfoContext);
+    mood, setMood,
+    file, setFile,
+    imageUrl, setImageUrl,
+    songs, setSongs,
+    selectedSongs, setSelectedSongs,
+    recommendedSongs, setRecommendedSongs,
+    manualMood, setManualMood,
+    userId, setUserId,
+    postId, setPostId
+  } = useContext(UserPhotoInfoContext);
 
+  // ----------------- Helpers -----------------
 
-  // ⚡ Load initial state from navigation (only first time)
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    return parts.length === 2 ? parts.pop().split(";").shift() : null;
+  };
+
+  const reorderRecommendations = (updatedSelected) => {
+    const selectedIds = new Set(updatedSelected.map(s => s.spotify_id));
+
+    const sortedSelected = updatedSelected.map(
+      s => songs.find(x => x.spotify_id === s.spotify_id)
+    );
+
+    const unselected = songs.filter(s => !selectedIds.has(s.spotify_id));
+
+    setRecommendedSongs([...sortedSelected, ...unselected]);
+  };
+
+  // ----------------- Load navigation state (first render only) -----------------
+
   useEffect(() => {
-    if (location.state) {
-      setUserId(location.state.userId || userId);
-      setPostId(location.state.postId || postId);
-      setMood(location.state.selectedMood || mood);
-      setSongs(location.state.songs || []);
-      setImageUrl(location.state.imageUrl || imageUrl);
-      setRecommendedSongs(location.state.songs || []);
+    if (!location.state) return;
+
+    const { userId: uid, postId: pid, selectedMood, songs: navSongs, imageUrl: navImg } = location.state;
+
+    if (uid) setUserId(uid);
+    if (pid) setPostId(pid);
+    if (selectedMood) setMood(selectedMood);
+    if (navSongs) {
+      setSongs(navSongs);
+      setRecommendedSongs(navSongs);
     }
+    if (navImg) setImageUrl(navImg);
   }, []);
 
+  // ----------------- Song Select / Deselect -----------------
 
-  // 🎵 Toggle song selection
   const handleToggleSong = (song) => {
     const exists = selectedSongs.some(s => s.spotify_id === song.spotify_id);
 
@@ -42,66 +65,132 @@ export default function Photo() {
       : [...selectedSongs, song];
 
     setSelectedSongs(updated);
-
-    // reorder recommendations
-    const selectedIds = new Set(updated.map(s => s.spotify_id));
-
-    setRecommendedSongs([
-      ...songs.filter(s => selectedIds.has(s.spotify_id))
-             .sort((a, b) =>
-               updated.findIndex(x => x.spotify_id === a.spotify_id) -
-               updated.findIndex(x => x.spotify_id === b.spotify_id)
-             ),
-      ...songs.filter(s => !selectedIds.has(s.spotify_id))
-    ]);
+    reorderRecommendations(updated);
   };
 
+  // ----------------- Mood Detection -----------------
 
-  // 📸 Call mood API
   const getMoodFromFile = async (file) => {
-    const formData = new FormData();
-    formData.append("image", file);
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+      }
 
-    const res = await fetch("http://127.0.0.1:8000/api/predict/", {
-      method: "POST",
-      body: formData,
-    });
+      const csrftoken = getCookie("csrftoken");
+      console.log("CSRF token:", csrftoken);
 
-    const data = await res.json();
-    setImageUrl(data.imageUrl);
-    return data.mood;
+      
+    if (!file) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("http://127.0.0.1:8000/api/predict/", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          // "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+
+      setImageUrl(data.image_url ?? null);
+      return data.mood ?? null;
+    } catch (err) {
+      console.error("Mood detection failed:", err);
+      return null;
+    }
   };
 
-
-  // 🎵 Fetch recommendations
   const fetchRecommendations = async (moodValue) => {
-    const res = await fetch(
-      `http://127.0.0.1:8000/api/get_Recommendation/?mood=${moodValue}`
-    );
-    const data = await res.json();
-    return data.recommendations || [];
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/get_recommendation/?mood=${moodValue}`,
+        { credentials: "include" }
+      );
+
+      const data = await res.json();
+      return data.recommendations ?? [];
+    } catch (err) {
+      console.error("Recommendation fetch failed:", err);
+      return [];
+    }
   };
 
-
-  // 😄 Detect mood whenever file or manualMood changes
   useEffect(() => {
     const detectMood = async () => {
       if (!file && !manualMood) return;
 
       const detectedMood = manualMood || (await getMoodFromFile(file));
+      if (!detectedMood) return;
+
       setMood(detectedMood);
 
-      const reco = await fetchRecommendations(detectedMood);
-      setSongs(reco);
-      setRecommendedSongs(reco.slice(0, 5));
+      const recos = await fetchRecommendations(detectedMood);
+      setSongs(recos);
+      setRecommendedSongs(recos.slice(0, 5));
     };
 
     detectMood();
   }, [file, manualMood]);
 
+  // ----------------- Next Button -----------------
+
+  const handleNext = async () => {
+    if (!mood && !file) return alert("Please select a mood or upload an image!");
+    if (!selectedSongs.length) return alert("Please select at least one song!");
+
+    try {
+      await fetch("http://127.0.0.1:8000/api/session/", { credentials: "include" });
+      const csrfToken = getCookie("csrftoken");
+
+      const res = await fetch("http://127.0.0.1:8000/api/create_post/", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          image: imageUrl || null,
+          songs: selectedSongs.map(s => ({
+            spotify_id: s.spotify_id,
+            name: s.title,
+            artist: s.artist,
+            album: s.album?.name ?? "",
+            image_url: s.album_cover,
+            duration_ms: s.duration_ms,
+            genre: s.genre
+          }))
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.post_id) return alert("haahaFailed to create post!");
+
+      setPostId(data.post_id);
+      navigate("/create/journal", {
+        state: {
+          postId: data.post_id,
+          selectedSongs,
+          imageUrl
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create post");
+    }
+  };
+
+  // ----------------- UI Rendering -----------------
 
   const currentSong = selectedSongs[selectedSongs.length - 1];
-
   const moods = {
     angry: "😡 Angry",
     happy: "😊 Happy",
@@ -110,66 +199,17 @@ export default function Photo() {
     surprise: "😲 Surprise",
   };
 
-
-  // ➡️ Next button
-const handleNext = async () => {
-  if (!mood && !file) return alert("Please select a mood or upload a picture!");
-  if (!selectedSongs.length) return alert("Please select at least one song!");
-
-  try {
-    const payload = {
-      user_id: userId,
-      image: imageUrl, // optional
-      songs: selectedSongs.map(s => ({
-        spotify_id: s.spotify_id,
-        name: s.title,
-        artist: s.artist,
-        album: s.album.name,
-        image_url: s.album_cover,
-        duration_ms: s.duration_ms,
-        genre: s.genre
-      }))
-    };
-
-    const res = await fetch("http://127.0.0.1:8000/api/create_post/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    if (!data.post_id) return alert("Failed to create post!");
-
-    setPostId(data.post_id);
-    navigate("/create/journal", {
-      state: { userId, postId: data.post_id, selectedSongs, imageUrl }
-    });
-
-  } catch (err) {
-    console.error(err);
-    alert("Failed to create post");
-  }
-};
-
-
-
-
-  // ---------------- UI BELOW ----------------
-
   return (
     <div className="flex min-h-screen bg-gray-50 p-6 gap-6">
-
-      {/* LEFT */}
+      {/* LEFT SECTION */}
       <div className="w-3/5 flex flex-col items-center bg-white shadow-lg rounded-2xl p-6 gap-4">
-        <h3 className="text-2xl font-semibold text-gray-700">Upload a Photo to Detect Mood</h3>
+        <h3 className="text-2xl font-semibold text-gray-700">
+          Upload a Photo to Detect Mood
+        </h3>
 
-        <div className="w-64 h-64 mb-4 border-2 border-dashed rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
+        <div className="w-64 h-64 border-2 border-dashed rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
           {file ? (
-            <img
-              src={URL.createObjectURL(file)}
-              alt="Selected"
-              className="object-cover w-full h-full"
-            />
+            <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
           ) : (
             <span className="text-gray-400">No photo selected</span>
           )}
@@ -178,15 +218,14 @@ const handleNext = async () => {
         <input
           type="file"
           accept="image/*"
+          className="w-full border rounded-lg p-1"
           onChange={(e) => setFile(e.target.files[0])}
-          className="block w-full border rounded-lg p-1 mb-4"
         />
 
-        <h2 className="font-semibold mt-4 mb-2 text-xl text-center">Mood Info</h2>
-
-        <div className="flex gap-6 mb-6">
+        <h2 className="text-xl font-semibold mt-4 mb-2">Mood Info</h2>
+        <div className="flex gap-6">
           {Object.entries(moods).map(([key, label]) => (
-            <label key={key} className="flex items-center space-x-1.5">
+            <label key={key} className="flex items-center space-x-2">
               <input
                 type="radio"
                 name="mood"
@@ -200,54 +239,43 @@ const handleNext = async () => {
         </div>
       </div>
 
-
-      {/* RIGHT */}
-      <div className="w-2/5 rounded-2xl p-6 flex flex-col justify-between bg-white shadow-md">
+      {/* RIGHT SECTION */}
+      <div className="w-2/5 flex flex-col justify-between bg-white shadow-md rounded-2xl p-6">
         {mood ? (
-          <h2 className="text-2xl font-semibold text-blue-600 capitalize">
-            Mood: {mood}
-          </h2>
+          <h2 className="text-2xl font-semibold text-blue-600 capitalize">Mood: {mood}</h2>
         ) : (
           <p className="text-gray-500">No mood detected yet.</p>
         )}
 
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+        <div className="max-h-[400px] overflow-y-auto space-y-2">
           {recommendedSongs.length ? (
-            recommendedSongs.map((song, i) => {
-              const isSelected = selectedSongs.some(
-                (s) => s.spotify_id === song.spotify_id
-              );
-              const rank = isSelected
-                ? selectedSongs.findIndex((s) => s.spotify_id === song.spotify_id) + 1
-                : null;
+            recommendedSongs.map((song) => {
+              const isSelected = selectedSongs.some(s => s.spotify_id === song.spotify_id);
+              const rank =
+                isSelected && selectedSongs.findIndex(s => s.spotify_id === song.spotify_id) + 1;
 
               return (
                 <div
-                  key={i}
-                  className={`p-2 rounded-xl flex justify-between items-center transition-all duration-300 ${
-                    isSelected
-                      ? "scale-105 border-blue-400 bg-blue-50 shadow-lg"
-                      : "hover:bg-gray-100"
+                  key={song.spotify_id}
+                  className={`flex justify-between items-center p-2 rounded-xl transition-all ${
+                    isSelected ? "scale-105 bg-blue-50 border-blue-400 shadow-lg" : "hover:bg-gray-100"
                   }`}
                 >
                   <div className="flex items-center space-x-3">
                     <img
                       src={song.album_cover}
-                      alt=""
                       className="w-12 h-12 rounded-lg"
                     />
                     <div>
                       <p className="font-semibold">{song.title}</p>
                       <p className="text-sm text-gray-500">{song.artist}</p>
-                      {isSelected && (
-                        <p className="text-xs text-blue-500">Selected #{rank}</p>
-                      )}
+                      {rank && <p className="text-xs text-blue-500">Selected #{rank}</p>}
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleToggleSong(song)}
-                    className={`px-4 py-1 rounded-lg font-medium transition ${
+                    className={`px-4 py-1 rounded-lg font-medium ${
                       isSelected ? "bg-blue-500 text-white" : "bg-gray-200"
                     }`}
                   >
@@ -261,22 +289,26 @@ const handleNext = async () => {
           )}
         </div>
 
-        <div className="mt-6 w-full bg-gray-100 rounded-xl p-4 text-center">
+        {/* Player */}
+        <div className="bg-gray-100 rounded-xl p-4 text-center mt-6">
           <p className="font-semibold mb-2">Music Player</p>
-          <audio
-            controls
-            className="w-full"
-            src={currentSong?.preview_url || ""}
-          ></audio>
+
           {currentSong ? (
-            <p className="mt-2 text-sm">
-              🎵 Now playing: <strong>{currentSong.title}</strong> by{" "}
-              {currentSong.artist}
-            </p>
+            <>
+              <iframe
+                title="Spotify Player"
+                src={`https://open.spotify.com/embed/track/${currentSong.spotify_id}`}
+                height="80"
+                width="100%"
+                frameBorder="0"
+                allow="encrypted-media"
+              />
+              <p className="mt-2 text-sm">
+                🎵 Now playing: <strong>{currentSong.title}</strong> by {currentSong.artist}
+              </p>
+            </>
           ) : (
-            <p className="text-gray-400 text-sm mt-2">
-              No song selected yet
-            </p>
+            <p className="text-gray-400 text-sm">No song selected</p>
           )}
         </div>
 

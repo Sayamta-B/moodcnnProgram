@@ -147,7 +147,7 @@ def predict(request):
     return Response({"mood": mood, "confidence": confidence, "recommendations": recommendations, "image_url": image_url})
 
 @api_view(['GET'])
-def get_Recommendation(request):
+def get_recommendation(request):
     mood = request.GET.get("mood")
     if not mood:
         return JsonResponse({"error": "Mood is required, example: /recommend_song_for_mood/?mood=happy"}, status=400)

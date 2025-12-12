@@ -13,7 +13,7 @@ export default function SidebarRight() {
   }, []);
 
   return (
-    <aside className="w-1/4 bg-white p-2 shadow-md flex flex-col h-screen">
+    <aside className="w-2/5 bg-white p-2 shadow-md flex flex-col h-screen">
       {!spotifyConnected && (
         <button
           className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mb-2"

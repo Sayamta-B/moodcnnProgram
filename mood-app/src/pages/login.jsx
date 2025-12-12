@@ -29,12 +29,15 @@ function Login() {
     e.preventDefault();
 
     try {
+      await fetch("http://127.0.0.1:8000/api/session/", { credentials: "include" });
+      const csrfToken = getCookie("csrftoken");
+
       const res = await fetch("http://127.0.0.1:8000/api/login/", {
         method: "POST",
         credentials: "include", // allow session cookies
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
+          "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify(form),
       });

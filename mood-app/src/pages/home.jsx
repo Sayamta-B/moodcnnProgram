@@ -12,17 +12,14 @@ function Home() {
   const { user } = useLogin();
 
   return (
-    <>
-      <div className="flex h-screen">
-        <main className="flex-1 overflow-y-auto p-5 space-y-5">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </main>
-        <SidebarRight />
-      </div>
-      {console.log(user)}
-          </>
+    <div className="flex h-screen relative">
+      <main className="flex-1 overflow-y-auto p-5 space-y-5">
+        {posts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))}
+      </main>
+      <SidebarRight />
+    </div>
   );
 }
 

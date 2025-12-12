@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, login_view, logout_view, who_am_i, session_view, predict, create_post, save_canvas, get_Recommendation, spotify_status, spotify_login, home_top_tracks, mood_tracks, profile_favorites, spotify_callback, debug_session 
+from .views import RegisterView, login_view, logout_view, who_am_i, session_view, predict, create_post, save_canvas, get_recommendation, spotify_status, spotify_login, home_top_tracks, mood_tracks, profile_favorites, spotify_callback, debug_session 
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -11,7 +11,7 @@ urlpatterns = [
     path('predict/', predict, name='predict'),
     path('create_post/', create_post, name='create_post'),
     path('save_canvas/', save_canvas, name="save_canvas"),
-    path('get_Recommendation/', get_Recommendation), 
+    path('get_recommendation/', get_recommendation), 
 
 
     path('spotify_login/', spotify_login, name='spotify_login'),

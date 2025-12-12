@@ -3,7 +3,7 @@ import { Heart, MessageCircle, Share2, MoreVertical } from "lucide-react";
 
 export default function PostCard(props) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 w-4/5 mx-auto">
+    <div className="bg-white rounded-2xl shadow-sm p-4 w-5/5 mx-auto">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
           <img
